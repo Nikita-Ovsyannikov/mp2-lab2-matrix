@@ -73,7 +73,7 @@ public:
 		this->sz = v.sz;
 		v.sz = 0;
 
-		this->pMem = std::move(v.pMem);
+		this->pMem = v.pMem;
 		v.pMem = nullptr;
 	}
 
@@ -82,29 +82,28 @@ public:
 		delete[] pMem;
 	}
 
-	TDynamicVector& operator=(const TDynamicVector& v)
+	TDynamicVector& operator=(const TDynamicVector& v) noexcept
 	{
-		this->sz = v.sz;
-		T* mas1 = new T[sz];
-		for (int i = 0; i < sz; i++) {
-			mas1[i] = v.pMem[i];
+		if (this->pMem != nullptr) {
+			delete[] this->pMem;
 		}
-		delete[] this->pMem;
+		this->sz = v.sz;
 		this->pMem = new T[sz];
 		for (int i = 0; i < sz; i++) {
-			this->pMem[i] = mas1[i];
+			this->pMem[i] = v.pMem[i];
 		}
 		return *this;
 	}
 
 	TDynamicVector& operator=(TDynamicVector&& v) noexcept
 	{
-		this->sz = v.sz;
-		v.sz = 0;
-		T* tmpArr = std::move(v.pMem);
-		v.pMem = nullptr;
-		delete[] this->pMem;
-		this->pMem = std::move(tmpArr);
+		if (this != &v) {
+			sz = v.sz;
+			delete[] this->pMem;
+			pMem = v.pMem;
+			v.pMem = nullptr;
+			v.sz = 0;
+		}
 		return *this;
 	}
 
@@ -123,7 +122,7 @@ public:
 	T& at(size_t ind)
 	{
 		if (ind < 0 || ind >= sz) {
-			throw out_of_range("Index     out of bounds");
+			throw out_of_range("Index out of bounds");
 		}
 		return this->pMem[ind];
 	}
@@ -254,7 +253,20 @@ public:
 			pMem[i] = TDynamicVector<T>(sz);
 	}
 
+	TDynamicMatrix(size_t size, const T& elem) : TDynamicMatrix(size) {
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				pMem[i][j] = elem;
+			}
+		}
+	}
+
 	using TDynamicVector<TDynamicVector<T>>::operator[];
+
+	T& at(size_t i, size_t j) {
+		if (i < 0 || j < 0 || i >= sz || j >= sz) throw out_of_range("incorrect index");
+		return pMem[i][j];
+	}
 
 	int size() const noexcept {
 		return sz;
@@ -271,24 +283,57 @@ public:
 	}
 
 	// матрично-скалярные операции
-	TDynamicVector<T> operator*(const T& val)
+	TDynamicMatrix<T> operator*(const T& val)
 	{
+		TDynamicMatrix<T> res(this->sz);
+		for (int i = 0; i < sz; i++) res[i] = pMem[i] * val;
+		return res;
 	}
 
 	// матрично-векторные операции
 	TDynamicVector<T> operator*(const TDynamicVector<T>& v)
 	{
+		if (this->sz != v.size()) throw "incorrect operation";
+		TDynamicVector<T> res(this->sz);
+		for (int i = 0; i < this->sz; i++) {
+			res[i] = this->pMem[i] * v;
+		}
+		return res;
 	}
 
 	// матрично-матричные операции
 	TDynamicMatrix operator+(const TDynamicMatrix& m)
 	{
+		if (this->sz != m.sz) throw "incorrect operation";
+		TDynamicMatrix<T> res(m.sz);
+		for (int i = 0; i < this->sz; i++) {
+			res[i] = (*this)[i] + m[i];
+		}
+		return res;
 	}
 	TDynamicMatrix operator-(const TDynamicMatrix& m)
 	{
+		if (this->sz != m.sz) throw "incorrect operation";
+		TDynamicMatrix<T> res(m.sz);
+		for (int i = 0; i < this->sz; i++) {
+			res[i] = (*this)[i] - m[i];
+		}
+		return res;
 	}
 	TDynamicMatrix operator*(const TDynamicMatrix& m)
 	{
+		if (this->sz != m.sz) throw "incorrect operation";
+		TDynamicMatrix<T> res(this->sz, 0);
+
+
+		for (size_t i = 0; i < this->sz; i++) {
+			for (size_t j = 0; j < this->sz; j++) {
+				for (size_t k = 0; k < this->sz; k++) {
+					res[i][j] += (*this).pMem[i][k] * m.pMem[k][j];
+				}
+			}
+		}
+		return res;
 	}
 
 	// ввод/вывод
