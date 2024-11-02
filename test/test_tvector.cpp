@@ -56,6 +56,76 @@ TEST(TDynamicVector, copied_vector_has_its_own_memory)
 	ASSERT_NE(&a,&b);
 }
 
+TEST(TDynamicVector, can_create_vector_by_moving_constuctor)
+{
+    TDynamicVector<int> a(10);
+
+    ASSERT_NO_THROW(TDynamicVector<int> b(std::move(a)));
+}
+
+TEST(TDynamicVector, correctly_work_memory_can_create_vector_by_moving_constuctor)
+{
+    TDynamicVector<int> a(10);
+    TDynamicVector<int> b(std::move(a));
+
+    EXPECT_EQ(&a[0], nullptr);
+}
+
+TEST(TDynamicVector, correct_values_when_create_vector_by_moving_constuctor)
+{
+    int mas[7] = { 1, 3, 5, 7, 9, 11, 13 };
+    TDynamicVector<int> a(mas, 7);
+    TDynamicVector<int> b(std::move(a));
+    for (int i = 0; i < b.size(); i++) {
+        EXPECT_EQ(b[i], 2 * i + 1);
+    }
+}
+
+TEST(TDynamicVector, correct_size_when_create_vector_by_moving_constuctor)
+{
+    TDynamicVector<int> a(10);
+    TDynamicVector<int> b(std::move(a));
+    EXPECT_EQ(b.size(), 10);
+    EXPECT_EQ(a.size(), 0);
+}
+
+TEST(TDynamicVector, can_create_vector_by_move_assignment_operator)
+{
+    TDynamicVector<int> a(10);
+    TDynamicVector<int> b(56);
+
+    ASSERT_NO_THROW(b = std::move(a));
+}
+
+TEST(TDynamicVector, correctly_work_memory_can_create_vector_by_move_assignment_operator)
+{
+    TDynamicVector<int> a(10);
+    TDynamicVector<int> b(56);
+    b = std::move(a);
+
+    EXPECT_EQ(&a[0], nullptr);
+}
+
+TEST(TDynamicVector, correct_values_when_create_vector_by_move_assignment_operator)
+{
+    int mas[7] = { 1, 3, 5, 7, 9, 11, 13 };
+    TDynamicVector<int> a(mas, 7);
+    TDynamicVector<int> b(56);
+    b = std::move(a);
+    for (int i = 0; i < b.size(); i++) {
+        EXPECT_EQ(b[i], 2 * i + 1);
+    }
+}
+
+TEST(TDynamicVector, correct_size_when_create_vector_by_move_assignment_operator)
+{
+    TDynamicVector<int> a(10);
+    TDynamicVector<int> b(56);
+    b = std::move(a);
+    EXPECT_EQ(b.size(), 10);
+    EXPECT_EQ(a.size(), 0);
+}
+
 TEST(TDynamicVector, can_get_size)
 {
   TDynamicVector<int> v(4);
